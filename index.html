@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>मनरेगा योजना - MGNREGA District Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #fff5f0 0%, #ffffff 50%, #f0fff4 100%);
+            min-height: 100vh;
+        }
+
+        .header {
+            background: linear-gradient(90deg, #ff6b35 0%, #f7931e 50%, #4caf50 100%);
+            color: white;
+            padding: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header h2 {
+            font-size: 1.25rem;
+            font-weight: normal;
+        }
+
+        .header p {
+            font-size: 0.9rem;
+            opacity: 0.95;
+            margin-top: 0.5rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+        }
+
+        .location-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .location-section h3 {
+            color: #333;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+        }
+
+        .location-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-group select {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1rem;
+            background: white;
+            cursor: pointer;
+            transition: border-color 0.3s;
+        }
+
+        .form-group select:focus {
+            outline: none;
+            border-color: #ff6b35;
+        }
+
+        .detect-location-btn {
+            background: linear-gradient(135deg, #4caf50, #45a049);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: transform 0.2s;
+        }
+
+        .detect-location-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #ff6b35;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error {
+            background: #fee;
+            border: 2px solid #fcc;
+            color: #c33;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            display: none; /* Initially hidden */
+        }
+
+        .dashboard {
+            display: none;
+        }
+
+        .dashboard.active {
+            display: block;
+        }
+
+        .update-info {
+            background: #e3f2fd;
+            padding: 0.75rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: #1976d2;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #ff6b35;
+            position: relative;
+        }
+
+        .stat-card.green { border-left-color: #4caf50; }
+        .stat-card.blue { border-left-color: #2196f3; }
+        .stat-card.purple { border-left-color: #9c27b0; }
+        .stat-card.orange { border-left-color: #ff9800; }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .stat-icon {
+            width: 28px;
+            height: 28px;
+            margin-right: 8px;
+        }
+
+        .stat-title {
+            font-size: 0.9rem;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .info-icon {
+            width: 18px;
+            height: 18px;
+            margin-left: 6px;
+            cursor: pointer;
+            color: #2196f3;
+        }
+
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-subtitle {
+            font-size: 0.8rem;
+            color: #888;
+        }
+
+        .tooltip {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            padding: 0.75rem;
+            width: 250px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 100;
+            top: 40px;
+            left: 0;
+        }
+
+        .tooltip.active {
+            display: block;
+        }
+
+        .tooltip-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 0.5rem;
+        }
+
+        .tooltip-desc {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .comparison-section {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+        }
+
+        .comparison-section h3 {
+            color: #333;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+
+        .comparison-card {
+            background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #bbdefb;
+        }
+
+        .comparison-title {
+            font-size: 0.9rem;
+            color: #555;
+            margin-bottom: 0.75rem;
+            font-weight: 600;
+        }
+
+        .comparison-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+
+        .comparison-label {
+            color: #666;
+        }
+
+        .comparison-value {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .change-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            font-weight: bold;
+            margin-top: 0.5rem;
+        }
+
+        .change-indicator.positive {
+            color: #4caf50;
+        }
+
+        .change-indicator.negative {
+            color: #f44336;
+        }
+
+        .trend-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 4px;
+        }
+        
+        /* Hide the historical chart section as per latest requirement */
+        .chart-section {
+            display: none; 
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.5rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>🏛️ मनरेगा योजना</h1>
+            <h2>MGNREGA District Performance Tracker</h2>
+            <p>हमारी आवाज़, हमारे अधिकार | Our Voice, Our Rights</p>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Location Selection -->
+        <div class="location-section">
+            <h3>
+                <svg class="location-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg>
+                अपना स्थान चुनें | Select Your Location
+            </h3>
+
+            <div class="form-group">
+                <label for="state">राज्य | State</label>
+                <select id="state">
+                    <option value="">-- राज्य चुनें | Select State --</option>
+                    <!-- Options populated by JS from /api/states -->
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="district">ज़िला | District</label>
+                <select id="district" disabled>
+                    <option value="">-- पहले राज्य चुनें | Select State First --</option>
+                </select>
+            </div>
+
+            <button class="detect-location-btn" id="detectLocationBtn">
+                <svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg>
+                मेरा स्थान खोजें | Auto-Detect Location
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="loading" style="display: none;">
+            <div class="spinner"></div>
+            <p>डेटा लोड हो रहा है... | Loading Data...</p>
+        </div>
+
+        <!-- Error State (Also used for location failure feedback) -->
+        <div id="errorState" class="error"></div>
+
+        <!-- Dashboard -->
+        <div id="dashboard" class="dashboard">
+            <div class="update-info" id="updateInfo"></div>
+
+            <!-- Key Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card green">
+                    <div class="stat-header">
+                        <svg class="stat-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9 6a3 3 0 11-6 0 3 3 0 016 0zM17 6a3 3 0 11-6 0 3 3 0 016 0zM12.93 17c.046-.327.07-.66.07-1a6.97 6.97 0 00-1.5-4.33A5 5 0 0119 16v1h-6.07zM6 11a5 5 0 015 5v1H1v-1a5 5 0 015-5z"/>
+                        </svg>
+                        <span class="stat-title">परिवारों ने काम किया | Households Worked</span>
+                        <svg class="info-icon" data-info="households" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="tooltip" data-tooltip="households">
+                            <div class="tooltip-title">परिवारों की संख्या</div>
+                            <div class="tooltip-desc">इस महीने में कितने परिवारों को मनरेगा के तहत काम मिला | Number of families that received work under MGNREGA this month</div>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="householdsWorked">--</div>
+                    <div class="stat-subtitle">इस महीने | This Month</div>
+                </div>
+
+                <div class="stat-card blue">
+                    <div class="stat-header">
+                        <svg class="stat-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="stat-title">औसत रोज़गार दिवस | Average Days</span>
+                        <svg class="info-icon" data-info="days" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="tooltip" data-tooltip="days">
+                            <div class="tooltip-title">औसत दिन</div>
+                            <div class="tooltip-desc">प्रति परिवार औसत काम के दिन (लक्ष्य: 100 दिन/वर्ष) | Average work days per household (Target: 100 days/year)</div>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgDays">--</div>
+                    <div class="stat-subtitle">प्रति परिवार | Per Household</div>
+                </div>
+
+                <div class="stat-card purple">
+                    <div class="stat-header">
+                        <svg class="stat-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8 9a3 3 0 100-6 3 3 0 000 6zM8 11a6 6 0 016 6H2a6 6 0 016-6zM16 7a1 1 0 10-2 0v1h-1a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V7z"/>
+                        </svg>
+                        <span class="stat-title">महिला कामगार | Women Workers</span>
+                        <svg class="info-icon" data-info="women" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="tooltip" data-tooltip="women">
+                            <div class="tooltip-title">महिला भागीदारी</div>
+                            <div class="tooltip-desc">मनरेगा में काम करने वाली महिलाओं की संख्या | Number of women participating in MGNREGA work</div>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="womenWorkers">--</div>
+                    <div class="stat-subtitle" id="womenPercent">कुल कामगारों में | Of Total Workers</div>
+                </div>
+
+                <div class="stat-card orange">
+                    <div class="stat-header">
+                        <svg class="stat-icon" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M8.433 7.418c.155-.103.346-.196.567-.267v1.698a2.305 2.305 0 01-.567-.267C8.07 8.34 8 8.114 8 8c0-.114.07-.34.433-.582zM11 12.849v-1.698c.22.071.412.164.567.267.364.243.433.468.433.582 0 .114-.07.34-.433.582a2.305 2.305 0 01-.567.267z"/>
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v.092a4.535 4.535 0 00-1.676.662C6.602 6.234 6 7.009 6 8c0 .99.602 1.765 1.324 2.246.48.32 1.054.545 1.676.662v1.941c-.391-.127-.68-.317-.843-.504a1 1 0 10-1.51 1.31c.562.649 1.413 1.076 2.353 1.253V15a1 1 0 102 0v-.092a4.535 4.535 0 001.676-.662C13.398 13.766 14 12.991 14 12c0-.99-.602-1.765-1.324-2.246A4.535 4.535 0 0011 9.092V7.151c.391.127.68.317.843.504a1 1 0 101.511-1.31c-.563-.649-1.413-1.076-2.354-1.253V5z" clip-rule="evenodd"/>
+                        </svg>
+                        <span class="stat-title">औसत मज़दूरी | Average Wage</span>
+                        <svg class="info-icon" data-info="wage" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div class="tooltip" data-tooltip="wage">
+                            <div class="tooltip-title">दैनिक मज़दूरी</div>
+                            <div class="tooltip-desc">कामगारों को मिलने वाली औसत दैनिक मज़दूरी | Average daily wage paid to workers</div>
+                        </div>
+                    </div>
+                    <div class="stat-value" id="avgWage">--</div>
+                    <div class="stat-subtitle">प्रतिदिन | Per Day</div>
+                </div>
+            </div>
+
+            <!-- Comparison Section -->
+            <div class="comparison-section">
+                <h3>📊 तुलना | Comparison</h3>
+                <div class="comparison-grid">
+                    <div class="comparison-card">
+                        <div class="comparison-title">पिछले महीने से | vs Last Month</div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">पिछला:</span>
+                            <span class="comparison-value" id="lastMonthPrev">--</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">वर्तमान:</span>
+                            <span class="comparison-value" id="lastMonthCurr">--</span>
+                        </div>
+                        <div class="change-indicator" id="lastMonthChange"></div>
+                    </div>
+
+                    <div class="comparison-card">
+                        <div class="comparison-title">पिछले साल से | vs Last Year</div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">पिछला:</span>
+                            <span class="comparison-value" id="lastYearPrev">--</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">वर्तमान:</span>
+                            <span class="comparison-value" id="lastYearCurr">--</span>
+                        </div>
+                        <div class="change-indicator" id="lastYearChange"></div>
+                    </div>
+
+                    <div class="comparison-card">
+                        <div class="comparison-title">राज्य औसत | State Average</div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">राज्य:</span>
+                            <span class="comparison-value" id="stateAvg">--</span>
+                        </div>
+                        <div class="comparison-row">
+                            <span class="comparison-label">आपका ज़िला:</span>
+                            <span class="comparison-value" id="districtVsState">--</span>
+                        </div>
+                        <div class="change-indicator" id="stateComparison"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Historical Trend (Hidden as per single-month requirement) -->
+            <div class="chart-section">
+                <h3>📈 पिछले 12 महीनों का डेटा | Last 12 Months Trend</h3>
+                <div class="chart-container">
+                    <div class="bar-chart" id="barChart"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Elements
+        const stateSelect = document.getElementById('state');
+        const districtSelect = document.getElementById('district');
+        const detectLocationBtn = document.getElementById('detectLocationBtn');
+        const loadingState = document.getElementById('loadingState');
+        const errorState = document.getElementById('errorState');
+        const dashboard = document.getElementById('dashboard');
+
+        const MAX_RETRIES = 3;
+        const BASE_DELAY = 1000;
+
+        /**
+         * Generic API caller with exponential backoff for network resilience.
+         */
+        async function callApi(url, method = 'GET', data = null, retries = 0) {
+            const options = {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+            };
+            if (data) options.body = JSON.stringify(data);
+
+            try {
+                const response = await fetch(url, options);
+                
+                if (response.status === 429) { // Rate limit or transient error
+                    throw new Error(`Rate limit exceeded or transient error: ${response.status}`);
+                }
+                
+                if (!response.ok) {
+                    const errorBody = await response.json().catch(() => ({}));
+                    throw new Error(`API call failed: ${response.status} ${response.statusText}`, { cause: errorBody });
+                }
+
+                return await response.json();
+
+            } catch (error) {
+                if (retries < MAX_RETRIES) {
+                    const delay = BASE_DELAY * Math.pow(2, retries) + Math.random() * 500;
+                    // console.warn(`Retrying ${url} in ${delay.toFixed(0)}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    return callApi(url, method, data, retries + 1);
+                }
+                throw error;
+            }
+        }
+
+        // --- Initialization and Data Fetching ---
+        
+        // Fetch states when page loads
+        document.addEventListener('DOMContentLoaded', fetchStates);
+
+        async function fetchStates() {
+            try {
+                const states = await callApi('/api/states');
+                stateSelect.innerHTML = '<option value="">-- राज्य चुनें | Select State --</option>';
+                states.forEach(state => {
+                    const option = document.createElement('option');
+                    option.value = state.stateCode;
+                    option.textContent = state.stateName;
+                    stateSelect.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error fetching states:", error);
+                errorState.textContent = 'राज्यों का डेटा लोड करने में समस्या | Failed to load states data.';
+                errorState.style.display = 'block';
+            }
+        }
+
+        async function fetchDistricts(stateCode) {
+            districtSelect.disabled = true;
+            districtSelect.innerHTML = '<option value="">-- ज़िला लोड हो रहा है... | Loading Districts... --</option>';
+            try {
+                const districts = await callApi(`/api/districts?state=${stateCode}`);
+                districtSelect.innerHTML = '<option value="">-- ज़िला चुनें | Select District --</option>';
+                districts.forEach(districtName => {
+                    const option = document.createElement('option');
+                    option.value = districtName;
+                    option.textContent = districtName;
+                    districtSelect.appendChild(option);
+                });
+                districtSelect.disabled = false;
+            } catch (error) {
+                console.error("Error fetching districts:", error);
+                districtSelect.innerHTML = '<option value="">-- ज़िला लोड नहीं हुआ | Failed to load Districts --</option>';
+            }
+        }
+
+        async function fetchDistrictData(state, district) {
+            loadingState.style.display = 'block';
+            errorState.style.display = 'none';
+            dashboard.classList.remove('active');
+
+            try {
+                const data = await callApi(`/api/district-data?state=${state}&district=${district}`);
+                displayDashboard(data);
+                
+            } catch (error) {
+                errorState.textContent = 'डेटा लोड करने में समस्या: नेटवर्क विफल | Network or server failure. Please try again.';
+                errorState.style.display = 'block';
+            } finally {
+                loadingState.style.display = 'none';
+            }
+        }
+        
+        // --- Event Listeners ---
+
+        stateSelect.addEventListener('change', function() {
+            const state = this.value;
+            districtSelect.innerHTML = '<option value="">-- पहले राज्य चुनें | Select State First --</option>';
+            
+            if (state) {
+                fetchDistricts(state);
+            } else {
+                districtSelect.disabled = true;
+            }
+            districtSelect.value = '';
+            dashboard.classList.remove('active');
+        });
+
+        districtSelect.addEventListener('change', function() {
+            if (this.value && stateSelect.value) {
+                fetchDistrictData(stateSelect.value, this.value);
+            } else {
+                dashboard.classList.remove('active');
+            }
+        });
+
+        detectLocationBtn.addEventListener('click', function() {
+            if (navigator.geolocation) {
+                this.disabled = true;
+                this.innerHTML = '<div class="spinner" style="width: 20px; height: 20px; margin: 0; border-width: 2px;"></div> स्थान खोज रहे हैं...';
+                errorState.style.display = 'none';
+                
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        const { latitude, longitude } = position.coords;
+                        attemptAutoDetect(latitude, longitude);
+                    },
+                    (error) => {
+                        errorState.textContent = 'स्थान एक्सेस अस्वीकृत | Location access denied by browser.';
+                        errorState.style.display = 'block';
+                        this.disabled = false;
+                        this.innerHTML = `<svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                        </svg> मेरा स्थान खोजें | Auto-Detect Location`;
+                    }
+                );
+            } else {
+                errorState.textContent = 'आपका ब्राउज़र स्थान सेवा का समर्थन नहीं करता | Your browser does not support location services.';
+                errorState.style.display = 'block';
+            }
+        });
+        
+        async function attemptAutoDetect(lat, lng) {
+            try {
+                const data = await callApi(`/api/detect-location?lat=${lat}&lng=${lng}`);
+                
+                if (data.detected) {
+                    // 1. Set State (Assumes MH is already in the list)
+                    stateSelect.value = data.state;
+                    // 2. Fetch districts for the detected state
+                    await fetchDistricts(data.state);
+                    // 3. Select the detected district
+                    districtSelect.value = data.district;
+
+                    // 4. *** CRITICAL FIX: Trigger data fetch immediately after setting district ***
+                    fetchDistrictData(data.state, data.district); 
+
+                    errorState.textContent = `स्थान मिला! ज़िला: ${data.district} | Location found! District: ${data.district}`;
+                    errorState.className = 'update-info'; // Use success styling
+                    errorState.style.display = 'block';
+                    
+                } else {
+                    errorState.textContent = `आपका ज़िला नहीं मिल सका, कृपया चुनें | Could not find your district, please select manually. (Detected name: ${data.detectedDistrictName || 'Unknown'})`;
+                    errorState.className = 'error'; // Use error styling
+                    errorState.style.display = 'block';
+                }
+
+            } catch (error) {
+                console.error("Auto-detect failed:", error);
+                errorState.textContent = 'स्थान API में समस्या | Problem connecting to location API. Please select manually.';
+                errorState.className = 'error';
+                errorState.style.display = 'block';
+            } finally {
+                detectLocationBtn.disabled = false;
+                detectLocationBtn.innerHTML = `<svg width="20" height="20" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+                </svg> मेरा स्थान खोजें | Auto-Detect Location`;
+            }
+        }
+
+
+        // Info icon tooltips
+        document.querySelectorAll('.info-icon').forEach(icon => {
+            icon.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const infoType = this.getAttribute('data-info');
+                const tooltip = document.querySelector(`[data-tooltip="${infoType}"]`);
+                
+                // Close all other tooltips
+                document.querySelectorAll('.tooltip').forEach(t => {
+                    if (t !== tooltip) t.classList.remove('active');
+                });
+                
+                tooltip.classList.toggle('active');
+            });
+        });
+
+        // Close tooltips when clicking outside
+        document.addEventListener('click', function() {
+            document.querySelectorAll('.tooltip').forEach(t => {
+                t.classList.remove('active');
+            });
+        });
+
+
+        // --- Dashboard Display Logic ---
+
+        function displayDashboard(data) {
+            // Update info
+            document.getElementById('updateInfo').textContent = 
+                `${data.district} (राज्य: ${data.state}) | Last Updated: ${data.lastUpdated}`;
+
+            // Update stats
+            document.getElementById('householdsWorked').textContent = 
+                formatNumber(data.current.householdsWorked);
+            document.getElementById('avgDays').textContent = 
+                data.current.avgDays.toFixed(1);
+            document.getElementById('womenWorkers').textContent = 
+                formatNumber(data.current.womenWorkers);
+            
+            const womenPercent = ((data.current.womenWorkers / data.current.activeWorkers) * 100).toFixed(0);
+            document.getElementById('womenPercent').textContent = 
+                `${womenPercent}% कुल कामगारों में`;
+            
+            document.getElementById('avgWage').textContent = 
+                `₹${formatNumber(data.current.avgWage)}`;
+
+            // Update comparisons
+            const currentHouseholds = data.current.householdsWorked;
+            
+            // Last Month Comparison (will be 0 change since we only seed 1 month)
+            updateComparison('lastMonth', currentHouseholds, 
+                data.comparison.lastMonth.previousValue, data.comparison.lastMonth.change);
+            
+            // Last Year Comparison (will be 0 change since we only seed 1 month)
+            updateComparison('lastYear', currentHouseholds, 
+                data.comparison.lastYear.previousValue, data.comparison.lastYear.change);
+            
+            // State Average Comparison
+            const stateAvg = data.comparison.stateAvg.value;
+            const stateChange = ((currentHouseholds - stateAvg) / stateAvg * 100);
+            updateStateComparison(currentHouseholds, stateAvg, stateChange);
+
+            // Show dashboard
+            dashboard.classList.add('active');
+        }
+
+        function updateComparison(id, current, previous, change) {
+            document.getElementById(`${id}Prev`).textContent = formatNumber(previous);
+            document.getElementById(`${id}Curr`).textContent = formatNumber(current);
+            
+            const changeEl = document.getElementById(`${id}Change`);
+            
+            // Handle 0 change when only 1 month of data exists
+            const displayChange = (change === 0) ? 'N/A' : `${Math.abs(change).toFixed(1)}%`;
+            const isPositive = change > 0;
+
+            changeEl.className = `change-indicator ${isPositive ? 'positive' : 'negative'}`;
+            changeEl.innerHTML = (change === 0) 
+                ? `<span style="color:#666; font-weight: normal;">कोई डेटा नहीं | N/A</span>`
+                : `<svg class="trend-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" ${isPositive ? '' : 'transform="rotate(180)"'}/>
+                </svg>
+                ${displayChange}`;
+        }
+
+        function updateStateComparison(district, state, change) {
+            document.getElementById('stateAvg').textContent = formatNumber(state);
+            document.getElementById('districtVsState').textContent = formatNumber(district);
+            
+            const changeEl = document.getElementById('stateComparison');
+            const isAbove = change > 0;
+            changeEl.className = `change-indicator ${isAbove ? 'positive' : 'negative'}`;
+            changeEl.innerHTML = `
+                <svg class="trend-icon" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" ${isAbove ? '' : 'transform="rotate(180)"'}/>
+                </svg>
+                ${isAbove ? 'राज्य से ऊपर | Above' : 'राज्य से नीचे | Below'}
+            `;
+        }
+
+        function formatNumber(num) {
+            if (num === null || num === undefined) return '--';
+            
+            if (num >= 10000000) {
+                return (num / 10000000).toFixed(2) + ' Cr';
+            } else if (num >= 100000) {
+                return (num / 100000).toFixed(2) + ' L';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return Math.round(num).toLocaleString('en-IN');
+        }
+
+        function formatNumberShort(num) {
+             if (num === null || num === undefined) return '--';
+            if (num >= 100000) {
+                return (num / 100000).toFixed(1) + 'L';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'K';
+            }
+            return num.toString();
+        }
+
+    </script>
+</body>
+</html>
