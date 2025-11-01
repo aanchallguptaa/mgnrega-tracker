@@ -22,34 +22,11 @@ Accessibility: Navigation features two simple entry points: Manual District Sele
 
 Tooltips: Simple info icons (ⓘ) provide concise, one-sentence explanations for complex program terms like "Average Days Provided."
 
-⚙️ Technical Architecture: Production Readiness
-
-The system is engineered for scalability, reliability, and performance, critical for potential usage by millions of Indian citizens.
-
-Technology Stack & Decoupling
+Technology Stack 
 
 Backend: Node.js (Express)
 
-Database: MongoDB Atlas (Managed, scalable persistence)
+Database: MongoDB Atlas 
 
-Frontend: HTML/CSS/Vanilla JavaScript (Minimalist, mobile-first design)
+Frontend: HTML/CSS/Vanilla JavaScript 
 
-Core Decision (High Availability): The application is decoupled from the external government API. All user queries hit the resilient MongoDB Atlas database, guaranteeing service uptime regardless of external API rate limits or downtime.
-
-Scalability and Resilience
-
-Database Optimization: MongoDB utilizes a Compound Index (stateCode: 1, districtName: 1, dataMonth: -1) to ensure critical data retrieval and state aggregation queries are near-instantaneous.
-
-API Resilience: The frontend employs a custom callApi function with Exponential Backoff and retry logic to overcome transient network failures and high latency often encountered on mobile networks.
-
-Data Seeding: The server uses an initializeDatabase script to seed the current month's performance data for all districts in Maharashtra upon startup, eliminating manual data entry.
-
-Auto-Detect Location
-
-The system implements robust, multi-stage logic to identify the user's district without asking them:
-
-It uses the browser's native Geolocation API for coordinates.
-
-It performs Reverse Geocoding via an external service (Nominatim).
-
-It executes Advanced Fuzzy Matching logic in the backend to successfully normalize and match the detected English name (e.g., "Chhatrapati Sambhajinagar") against the complex bilingual names stored in the database.
